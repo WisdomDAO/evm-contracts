@@ -3,16 +3,16 @@ pragma solidity ^0.8.20;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ISAGE} from "./interfaces/ISAGE.sol";
 import {IStaking} from "./interfaces/IStaking.sol";
 import {IPresale} from "./interfaces/IPresale.sol";
 
 contract Staking is Ownable, IStaking {
     /// OpenZeppelin's lib for safe token transfers
-    using SafeERC20 for IERC20;
+    using SafeERC20 for ISAGE;
 
     /// @notice SAGE token address
-    address public immutable sage;
+    ISAGE public immutable sage;
 
     /// @notice Duration in blocks
     uint128 public immutable duration;
@@ -28,13 +28,14 @@ contract Staking is Ownable, IStaking {
 
     /// @dev Allow to execute functions with this modifier when staking begins
     modifier isStarted() {
-        if (startAtBlock > block.number) revert NotStartedYet();
+        if (startAtBlock > block.number || startAtBlock == 0)
+            revert NotStartedYet();
         _;
     }
 
     /// @dev Create staking contract
     constructor(
-        address sageTokenAddress,
+        ISAGE sageTokenAddress,
         uint64 stakingDurationInBlocks
     ) Ownable(msg.sender) {
         sage = sageTokenAddress;
@@ -45,13 +46,13 @@ contract Staking is Ownable, IStaking {
      * @notice Add buyer to the staking contract
      * @param user Buyer of the token on public presale
      * @param amount Amount of the SAGE tokens user bought
-     * @dev Owner (presale contract) should have 2 * amount SAGE tokens on the 
+     * @dev Owner (presale contract) should have 2 * amount SAGE tokens on the
      * balance. Owner can add users before staking starts. After start ownership
      * of this contract will be renounced.
      */
-    function add(address user, uint256 amount) external onlyOwner() {
+    function add(address user, uint256 amount) external onlyOwner {
         // Transfer bought and staking rewards
-        IERC20(sage).safeTransferFrom(owner(), address(this), amount * 2);
+        sage.safeTransferFrom(owner(), address(this), amount * 2);
         balanceOf[user] += amount;
     }
 
@@ -61,7 +62,7 @@ contract Staking is Ownable, IStaking {
      * @dev This function can be executed by owner (presale contract) only once,
      * after that ownership of this contract will be renounced.
      */
-    function start(uint128 blockNumber) external onlyOwner() {
+    function start(uint128 blockNumber) external onlyOwner {
         // Check blockNumber
         if (blockNumber == 0) revert ZeroAmount();
         // Set block number when staking begins
@@ -76,33 +77,31 @@ contract Staking is Ownable, IStaking {
         // Withdraw tokens
         uint256 balance = balanceOf[msg.sender];
         balanceOf[msg.sender] = 0;
-        IERC20(sage).safeTransfer(msg.sender, balance);
+        sage.safeTransfer(msg.sender, balance);
 
         // Burn unclaimed tokens
-        uint256 unclaimed = 
-            balance * (finalBlock() - _getLastClaim(msg.sender)) / duration;
-        if (unclaimed != 0) IERC20(sage).safeTransfer(address(0), unclaimed);
+        uint256 unclaimed = (balance *
+            (finalBlock() - _getLastClaim(msg.sender))) / duration;
+        if (unclaimed != 0) sage.burn(unclaimed);
 
         emit Withdraw(msg.sender, balance, unclaimed);
     }
 
     function claim() external isStarted {
-        if (lastClaimAtBlock[msg.sender] == block.number) revert AlreadyClaimed();
         uint256 amount = claimableAmount(msg.sender);
         if (amount == 0) revert ZeroAmount();
         lastClaimAtBlock[msg.sender] = block.number;
-        IERC20(sage).safeTransfer(msg.sender, amount);
+        sage.safeTransfer(msg.sender, amount);
         emit Claim(msg.sender, amount);
     }
 
     function claimableAmount(address user) public view returns (uint256) {
         if (startAtBlock >= block.number || balanceOf[user] == 0) return 0;
         uint256 previousClaimAt = _getLastClaim(user);
-        uint256 lastBlock = block.number <= finalBlock()
-            ? block.number
-            : finalBlock();
+        uint256 lastBlock = finalBlock();
+        if (block.number < lastBlock) lastBlock = block.number;
 
-        return balanceOf[user] * (lastBlock - previousClaimAt) / duration;
+        return (balanceOf[user] * (lastBlock - previousClaimAt)) / duration;
     }
 
     function finalBlock() public view returns (uint256) {
@@ -110,6 +109,7 @@ contract Staking is Ownable, IStaking {
     }
 
     function _getLastClaim(address user) internal view returns (uint256) {
-        return lastClaimAtBlock[user] == 0 ? startAtBlock : lastClaimAtBlock[user];
+        return
+            lastClaimAtBlock[user] == 0 ? startAtBlock : lastClaimAtBlock[user];
     }
 }

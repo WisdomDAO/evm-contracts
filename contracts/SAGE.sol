@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "./Token/ERC20Taxable.sol";
-import "./interfaces/ISage.sol";
+import "./interfaces/ISAGE.sol";
 
 /**
  * @title SAGE token contract
@@ -56,7 +56,7 @@ contract SAGE is ERC20, ERC20Taxable, ERC20Permit, ERC20Votes, ISAGE {
      */
     function nonces(
         address owner
-    ) public view override(ERC20Permit, Nonces) returns (uint256) {
+    ) public view override(IERC20Permit, ERC20Permit, Nonces) returns (uint256) {
         return super.nonces(owner);
     }
 }
