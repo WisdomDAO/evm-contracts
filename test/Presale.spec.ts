@@ -12,7 +12,7 @@ const ONE_TOKEN = BigInt(1e18);
 const NotStartedYet = "NotStartedYet";
 const ZeroAmount = "ZeroAmount";
 
-describe("Presale Staking Program", function () {
+describe("Presale Ethereum", function () {
   async function deployContracts() {
     const [owner, user1, user2, user3] = await hre.ethers.getSigners();
 
@@ -25,18 +25,21 @@ describe("Presale Staking Program", function () {
       STAKING_DURATION
     );
 
-    return { owner, user1, user2, user3, staking, sage };
+    const PresaleEthereum = await hre.ethers.getContractFactory("PresaleEthereum");
+    const presale = await PresaleEthereum.deploy(await sage.getAddress(), staking.getAddress())
+
+    return { owner, user1, user2, user3, staking, sage, presale };
   }
 
   async function deployContractsActivated() {
-    const { owner, user1, user2, user3, staking, sage } = await loadFixture(
+    const { owner, user1, user2, user3, staking, sage, presale } = await loadFixture(
       deployContracts
     );
 
     await sage.connect(owner).approve(staking.getAddress(), MaxUint256);
     await staking.connect(owner).add(user1.address, ONE_TOKEN);
 
-    return { owner, user1, user2, user3, staking, sage };
+    return { owner, user1, user2, user3, staking, sage, presale };
   }
 
   describe("Claim", function () {

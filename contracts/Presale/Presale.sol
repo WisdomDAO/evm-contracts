@@ -37,8 +37,8 @@ abstract contract Presale is Ownable, IPresale {
     }
 
     function stopPresale(uint48 timestamp) external onlyOwner {
-        if (timestamp == 0) revert ZeroAmount();
         if (stakingStartsAtBlock != 0) revert PresaleEnded();
+        if (timestamp == 0) revert ZeroAmount();
 
         stakingStartsAtBlock = timestamp;
 

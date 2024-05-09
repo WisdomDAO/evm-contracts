@@ -12,3 +12,8 @@ node_modules
 # solidity-coverage files
 /coverage
 /coverage.json
+
+/ignition/deployments/chain-11155111
+
+.DS_Store
+*/**/.DS_Store
