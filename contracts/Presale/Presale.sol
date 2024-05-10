@@ -36,11 +36,11 @@ abstract contract Presale is Ownable, IPresale {
         IERC20(sage).approve(staking, type(uint256).max);
     }
 
-    function stopPresale(uint48 timestamp) external onlyOwner {
+    function stopPresale(uint48 blockNumber) external onlyOwner {
         if (stakingStartsAtBlock != 0) revert PresaleEnded();
-        if (timestamp == 0) revert ZeroAmount();
+        if (blockNumber == 0) revert ZeroAmount();
 
-        stakingStartsAtBlock = timestamp;
+        stakingStartsAtBlock = blockNumber;
 
         uint256 unsold = IERC20(sage).balanceOf(address(this));
         if (unsold != 0) IERC20(sage).safeTransfer(address(0), unsold);
