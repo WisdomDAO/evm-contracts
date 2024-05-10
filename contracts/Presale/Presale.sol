@@ -11,7 +11,7 @@ import {IStaking} from "../interfaces/IStaking.sol";
 abstract contract Presale is Ownable, IPresale {
     using SafeERC20 for IERC20;
 
-    address public immutable sageToken;
+    address public immutable sage;
     address public immutable staking;
 
     uint256 public minAmount = 100e18;
@@ -21,19 +21,19 @@ abstract contract Presale is Ownable, IPresale {
 
     modifier checkAmount(uint256 amount) {
         if (amount < minAmount) revert AmountTooLow();
-        if (amount > IERC20(sageToken).balanceOf(address(this)))
+        if (amount > IERC20(sage).balanceOf(address(this)))
             revert NotEnoughSAGE();
         if (stakingStartsAtBlock != 0) revert PresaleEnded();
         _;
     }
 
-    constructor(address sage, address stakingContract) Ownable(msg.sender) {
+    constructor(address sageToken, address stakingContract) Ownable(msg.sender) {
         if (sage == address(0)) revert ZeroAddress();
         if (stakingContract == address(0)) revert ZeroAddress();
 
-        sageToken = sage;
+        sage = sageToken;
         staking = stakingContract;
-        IERC20(sageToken).approve(staking, type(uint256).max);
+        IERC20(sage).approve(staking, type(uint256).max);
     }
 
     function stopPresale(uint48 timestamp) external onlyOwner {
@@ -42,8 +42,8 @@ abstract contract Presale is Ownable, IPresale {
 
         stakingStartsAtBlock = timestamp;
 
-        uint256 unsold = IERC20(sageToken).balanceOf(address(this));
-        if (unsold != 0) IERC20(sageToken).safeTransfer(address(0), unsold);
+        uint256 unsold = IERC20(sage).balanceOf(address(this));
+        if (unsold != 0) IERC20(sage).safeTransfer(address(0), unsold);
 
         IStaking(staking).start(stakingStartsAtBlock);
 
@@ -62,7 +62,7 @@ abstract contract Presale is Ownable, IPresale {
         if (!SignatureChecker.isValidSignatureNow(owner(), _hash, signature))
             revert BadSignature();
         isClaimed[_hash] = true;
-        IERC20(sageToken).safeTransfer(msg.sender, amount);
+        IERC20(sage).safeTransfer(msg.sender, amount);
 
         emit Claim(msg.sender, amount);
     }
