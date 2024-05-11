@@ -22,4 +22,8 @@ contract MockStablecoin is ERC20, ERC20Permit {
     function mint() public {
         _mint(msg.sender, 1_000_000 * 10 ** _decimals);
     }
+
+    function decimals() public view override returns (uint8) {
+        return _decimals;
+    }
 }

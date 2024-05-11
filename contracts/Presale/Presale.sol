@@ -28,7 +28,7 @@ abstract contract Presale is Ownable, IPresale {
     }
 
     constructor(address sageToken, address stakingContract) Ownable(msg.sender) {
-        if (sage == address(0)) revert ZeroAddress();
+        if (sageToken == address(0)) revert ZeroAddress();
         if (stakingContract == address(0)) revert ZeroAddress();
 
         sage = sageToken;

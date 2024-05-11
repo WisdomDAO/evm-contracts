@@ -4,9 +4,9 @@ pragma solidity ^0.8.20;
 import {Presale} from "./Presale.sol";
 
 contract PresaleSepolia is Presale {
-    address public constant USDT = 0xC66EfC95A9BF5C724b62236Ac85FDBB9C091c83e;
-    address public constant USDC = 0x772a437F10E1CFb9C8186d4DFAa278eC97BE30b1;
-    address public constant DAI = 0x56f36B6B1F6D69f1355070be1e5452329abE2326;
+    address public constant USDT = 0x538Ff108B92Cf77f2A67f3f8BBb1f614729190C2;
+    address public constant USDC = 0x27C43E8C9c7A9521cd7747D86fb9b439e0A1917F;
+    address public constant DAI = 0xaF1093b9038a1CF8f3a75Db3d8C419E9bb710F30;
 
     uint256 public priceUSDT;
     uint256 public priceUSDC;
